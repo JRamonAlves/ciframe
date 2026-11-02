@@ -1,49 +1,46 @@
 # Proposta — Sequências de Acordes Customizadas
 
-> Com base na pesquisa, declare a abordagem escolhida e por quê. Esta fase é sobre
-> decidir, não sobre implementar. Apague este bloco de instruções antes de
-> entregar.
-
 ## Abordagem escolhida
 
 ### Algoritmo de matching
 
-[Defina precisamente a regra: o que torna uma música "compatível" com uma
-sequência cadastrada. Deve ser uma definição que dá para implementar e testar,
-não uma descrição vaga.]
+Todas as sequências, incluindo as 6 originais, usam a mesma regra calculada em tempo real: a sequência é uma sublista contígua da cifra e todos os acordes da música pertencem ao conjunto da sequência (set(cifra) <= set(seq) and contiguous(cifra, seq)). Esse trecho foi retirado direto do proposal que ele escreveu, descreve bem como vai funcionar o algoritmo. 
 
 ### Banco de dados
 
-[Qual tecnologia, por quê. Lembre-se: só o catálogo de sequências vai para o
-banco — o catálogo de músicas/gêneros continua vindo do CSV em memória, como
-hoje.]
+SQLite, fácil de implementar e pertence a linguagem como stdlib, não aumenta o requiriments.txt.
 
 ### Esquema de dados (alto nível)
 
-[Quais tabelas/campos, sem ainda detalhar migrations — isso é plano, não
-proposta.]
+(id, nome, acordes_json, chave UNIQUE, criado_em). Também tirado direto do proposal gerado por ele.
 
 ### API
 
-[Quais endpoints novos ou alterados, formato de entrada/saída. Considere que o
-catálogo é aberto e anônimo: qualquer um pode cadastrar uma sequência, sem
-login.]
+GET /sequencias e POST /sequencias. Também tirados direto do proposal.
 
 ### Frontend
 
-[O que muda em `#/porsequencia` para permitir cadastro de uma nova sequência e
-busca usando qualquer sequência (antiga ou nova) do mesmo jeito.]
+Em static/assets/js/controllers/sequencia.js:2-37, remover as 4 sequências hardcoded; carregar GET sequencias na inicialização. Adicionar formulário em static/templates/sequencia.html:6-8 com nome e lista de acordes, POST e recarga do catálogo. Trecho retirado direto do proposal gerado por ele. Essa parte faz mais sentido quando se lê todo o resto do proposal. 
 
 ## Alternativas consideradas e descartadas
 
-[Pelo menos uma alternativa real que você considerou e descartou, com o motivo.]
+Trocar o algoritmo por um híbrido. Não achei que fizesse muito sentido, achei melhor usar algo mais consistente.
 
 ## Escopo explícito
 
 **Dentro do escopo:**
 
-- [...]
+1. Catálogo de sequências em SQLite (db.py, instance/deciframe.db), tabela sequencias(id, nome, acordes_json, chave UNIQUE, criado_em), com as 6 originais seedadas como linhas normais.
+2. Matching único set(cifra) <= set(seq) and contiguous(cifra, seq) sobre musica.cifra, substituindo get_similares_por_sequencia.
+3. GET /sequencias e POST /sequencias com json.dumps(...); /similares ganha sequencia_id e mantém sequencia= nas duas formas; 400 inválido, 409 duplicata.
+4. sequencia.js deixa de ter as 4 hardcoded, carrega o catálogo, ganha formulário de cadastro e busca por sequencia_id.
+5. Volume nomeado em /app/instance, ignores atualizados, e tests/ com unittest + test_client e fixture dourada das 6.
+Fora do escopo (5 linhas)
 
 **Fora do escopo (e por quê):**
 
-- [...]
+1. CSV de músicas/gêneros e o loop main.py:49-98 (musicas, genero_musicas, generos, acordes) ficam intactos; musica.py não muda.
+2. A tag SEQ_FAMOSA continua carregada e exposta em /musicas e /musica/<id>; só deixa de ser usada na busca.
+3. /search, /musicas, /musica/<id>/, /generos, /acordes, estáticos, CORS e Content-Type: text/html inalterados; busca por acordes=/id_unico_musica= também.
+4. Sem normalização/transposição de acordes, sem login/moderação/rate limit, sem edição ou exclusão de sequências, sem paginação do catálogo.
+5. Stack AngularJS/jQuery e Dockerfile/requirements.txt sem mudança estrutural; scripts/ e o CSV não são regenerados; índice/cache e nuvem ficam para depois.
