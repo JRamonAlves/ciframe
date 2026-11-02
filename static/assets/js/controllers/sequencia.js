@@ -55,7 +55,8 @@ angular.module('deciframeApp').controller('SequenciaController', function($http,
     if (sequencia) {
       vm.minhaSequencia = sequencia;
     }
-    if (!vm.minhaSequencia.id) {
+    // id 0 é válido: não usar checagem de truthiness aqui.
+    if (!vm.minhaSequencia || vm.minhaSequencia.id == null) {
       return;
     }
     vm.progressbar.start();
